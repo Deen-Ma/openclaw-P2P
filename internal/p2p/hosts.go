@@ -37,7 +37,6 @@ func CreateHost(ctx context.Context, listenPort int, identityPath string) (*Host
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", listenPort)),
 		libp2p.Identity(priv),
 		libp2p.NATPortMap(),
-		libp2p.EnableAutoRelay(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create host: %w", err)
