@@ -12,8 +12,10 @@ import (
 	"time"
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	routingdiscovery "github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	ma "github.com/multiformats/go-multiaddr"
 
 	"openagent/internal/sae"
 )
@@ -107,6 +109,7 @@ func NewNode(ctx context.Context, cfg Config) (*Node, error) {
 		hostBundle: hostBundle,
 		cancel:     cancel,
 	}
+	node.registerConnectionTracing()
 
 	RegisterFetchHandler(hostBundle.Host, node.handleFetch)
 	RegisterNegotiateHandler(hostBundle.Host, node.handleNegotiate)
@@ -169,6 +172,38 @@ func NewNode(ctx context.Context, cfg Config) (*Node, error) {
 		return nil, err
 	}
 	return node, nil
+}
+
+func (n *Node) registerConnectionTracing() {
+	n.hostBundle.Host.Network().Notify(&network.NotifyBundle{
+		ConnectedF: func(_ network.Network, conn network.Conn) {
+			if conn == nil || conn.RemotePeer() == "" {
+				return
+			}
+			info := peer.AddrInfo{ID: conn.RemotePeer()}
+			if addr := conn.RemoteMultiaddr(); addr != nil {
+				info.Addrs = []ma.Multiaddr{addr}
+			}
+			_ = n.Store.RecordPeer(info)
+			_ = n.Store.AppendEvent(EventLogEntry{
+				Type:    "peer_connected",
+				Applied: true,
+				Reason:  conn.Stat().Direction.String(),
+				PeerID:  conn.RemotePeer().String(),
+			})
+		},
+		DisconnectedF: func(_ network.Network, conn network.Conn) {
+			if conn == nil || conn.RemotePeer() == "" {
+				return
+			}
+			_ = n.Store.AppendEvent(EventLogEntry{
+				Type:    "peer_disconnected",
+				Applied: true,
+				Reason:  conn.Stat().Direction.String(),
+				PeerID:  conn.RemotePeer().String(),
+			})
+		},
+	})
 }
 
 func (n *Node) Close() error {

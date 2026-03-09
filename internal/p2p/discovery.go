@@ -8,6 +8,7 @@ import (
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	routingdiscovery "github.com/libp2p/go-libp2p/p2p/discovery/routing"
@@ -60,7 +61,12 @@ func SetupRendezvous(ctx context.Context, h host.Host, rendezvous string, bootst
 		cancel()
 		return nil, nil, nil, fmt.Errorf("create DHT: %w", err)
 	}
-	if err := connectBootstrapPeers(discoveryCtx, h, bootstrapPeers, onPeer); err != nil {
+	bootstrapInfos, err := parseBootstrapPeers(bootstrapPeers)
+	if err != nil {
+		cancel()
+		return nil, nil, nil, err
+	}
+	if err := ensureConnectedPeers(discoveryCtx, h, bootstrapInfos, onPeer); err != nil {
 		cancel()
 		return nil, nil, nil, err
 	}
@@ -73,9 +79,10 @@ func SetupRendezvous(ctx context.Context, h host.Host, rendezvous string, bootst
 	_ = tryAdvertise(discoveryCtx, routing, rendezvous)
 
 	go func() {
-		ticker := time.NewTicker(30 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		for {
+			_ = ensureConnectedPeers(discoveryCtx, h, bootstrapInfos, onPeer)
 			_ = tryAdvertise(discoveryCtx, routing, rendezvous)
 			findAndConnect(discoveryCtx, h, routing, rendezvous, onPeer)
 			select {
@@ -102,24 +109,34 @@ func tryAdvertise(ctx context.Context, routing *routingdiscovery.RoutingDiscover
 	return fmt.Errorf("advertise rendezvous: %w", err)
 }
 
-func connectBootstrapPeers(ctx context.Context, h host.Host, bootstrapPeers []string, onPeer func(peer.AddrInfo)) error {
+func parseBootstrapPeers(bootstrapPeers []string) ([]peer.AddrInfo, error) {
+	infos := make([]peer.AddrInfo, 0, len(bootstrapPeers))
 	for _, bootstrap := range bootstrapPeers {
 		addr, err := ma.NewMultiaddr(bootstrap)
 		if err != nil {
-			return fmt.Errorf("parse bootstrap %q: %w", bootstrap, err)
+			return nil, fmt.Errorf("parse bootstrap %q: %w", bootstrap, err)
 		}
 		info, err := peer.AddrInfoFromP2pAddr(addr)
 		if err != nil {
-			return fmt.Errorf("bootstrap addr info %q: %w", bootstrap, err)
+			return nil, fmt.Errorf("bootstrap addr info %q: %w", bootstrap, err)
 		}
+		infos = append(infos, *info)
+	}
+	return infos, nil
+}
+
+func ensureConnectedPeers(ctx context.Context, h host.Host, peers []peer.AddrInfo, onPeer func(peer.AddrInfo)) error {
+	for _, info := range peers {
 		if info.ID == h.ID() {
 			continue
 		}
-		if err := h.Connect(ctx, *info); err != nil {
-			return fmt.Errorf("connect bootstrap peer %s: %w", info.ID, err)
+		if h.Network().Connectedness(info.ID) != network.Connected {
+			if err := h.Connect(ctx, info); err != nil {
+				return fmt.Errorf("connect peer %s: %w", info.ID, err)
+			}
 		}
 		if onPeer != nil {
-			onPeer(*info)
+			onPeer(info)
 		}
 	}
 	return nil
@@ -134,9 +151,10 @@ func findAndConnect(ctx context.Context, h host.Host, routing *routingdiscovery.
 		if info.ID == "" || info.ID == h.ID() {
 			continue
 		}
-		_ = h.Connect(ctx, info)
-		if onPeer != nil {
-			onPeer(info)
+		if h.Network().Connectedness(info.ID) == network.Connected || h.Connect(ctx, info) == nil {
+			if onPeer != nil {
+				onPeer(info)
+			}
 		}
 	}
 }
