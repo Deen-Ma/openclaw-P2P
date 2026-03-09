@@ -3,6 +3,7 @@ package p2p
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -69,15 +70,13 @@ func SetupRendezvous(ctx context.Context, h host.Host, rendezvous string, bootst
 	}
 
 	routing := routingdiscovery.NewRoutingDiscovery(kad)
-	if _, err := routing.Advertise(discoveryCtx, rendezvous); err != nil {
-		cancel()
-		return nil, nil, nil, fmt.Errorf("advertise rendezvous: %w", err)
-	}
+	_ = tryAdvertise(discoveryCtx, routing, rendezvous)
 
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for {
+			_ = tryAdvertise(discoveryCtx, routing, rendezvous)
 			findAndConnect(discoveryCtx, h, routing, rendezvous, onPeer)
 			select {
 			case <-discoveryCtx.Done():
@@ -88,6 +87,19 @@ func SetupRendezvous(ctx context.Context, h host.Host, rendezvous string, bootst
 	}()
 
 	return kad, routing, cancel, nil
+}
+
+func tryAdvertise(ctx context.Context, routing *routingdiscovery.RoutingDiscovery, rendezvous string) error {
+	_, err := routing.Advertise(ctx, rendezvous)
+	if err == nil {
+		return nil
+	}
+	// The first bootstrap node may start with an empty routing table.
+	// In that case we keep the node alive and retry after peers arrive.
+	if strings.Contains(err.Error(), "failed to find any peer in table") {
+		return nil
+	}
+	return fmt.Errorf("advertise rendezvous: %w", err)
 }
 
 func connectBootstrapPeers(ctx context.Context, h host.Host, bootstrapPeers []string, onPeer func(peer.AddrInfo)) error {
