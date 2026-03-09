@@ -1,0 +1,4 @@
+.local/
+openagent
+*.test
+coverage.out
