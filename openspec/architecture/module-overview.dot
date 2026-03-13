@@ -1,0 +1,79 @@
+digraph OpenClawP2P {
+  graph [
+    rankdir=LR
+    bgcolor="white"
+    pad="0.25"
+    nodesep="0.55"
+    ranksep="0.8"
+    fontname="Helvetica"
+    labelloc="t"
+    label="OpenClaw-P2P Module Overview"
+  ];
+
+  node [
+    shape=box
+    style="rounded,filled"
+    fontname="Helvetica"
+    fontsize=12
+    color="#4b5563"
+    penwidth=1.1
+    margin="0.18,0.10"
+  ];
+
+  edge [
+    color="#6b7280"
+    penwidth=1.2
+    arrowsize=0.8
+    fontname="Helvetica"
+    fontsize=10
+  ];
+
+  user [label="Telegram User", fillcolor="#f3f4f6"];
+  runtime [label="OpenClaw Runtime\nmabot / tg2", fillcolor="#f3f4f6"];
+  peer [label="Remote Peers\ncloud1 etc.", fillcolor="#f3f4f6"];
+
+  workspace [label="6. Workspace Templates\nVerified", fillcolor="#dff3e3", color="#2f7d32"];
+  plugin [label="3. OpenClaw Tool Plugin\nVerified, has follow-up fixes", fillcolor="#fff3cd", color="#946200"];
+  store [label="4. Local State Store\nVerified", fillcolor="#dff3e3", color="#2f7d32"];
+  adapter [label="2. Adapter Orchestration\nVerified", fillcolor="#dff3e3", color="#2f7d32"];
+  core [label="1. Go OpenAgent Core\nWorking, needs stability work", fillcolor="#fff3cd", color="#946200"];
+  bridge [label="5. Telegram Bridge Runtime\nExists, not main path", fillcolor="#fff3cd", color="#946200"];
+  ops [label="7. Acceptance and Ops Tooling\nVerified", fillcolor="#dff3e3", color="#2f7d32"];
+
+  user -> runtime [label="DM"];
+  runtime -> workspace [label="behavior rules"];
+  workspace -> plugin [label="tool choice"];
+  plugin -> store [label="pending / outgoing / events"];
+  plugin -> adapter [label="tool actions"];
+  adapter -> core [label="HTTP API"];
+  core -> peer [label="gossip / fetch", dir=both];
+  bridge -> adapter [label="direct bridge path"];
+
+  ops -> runtime [style=dashed, label="observe"];
+  ops -> store [style=dashed, label="inspect"];
+  ops -> core [style=dashed, label="verify"];
+
+  subgraph cluster_repo {
+    label="Repo-owned modules";
+    color="#cbd5e1";
+    style="rounded";
+    fontsize=12;
+    workspace;
+    plugin;
+    store;
+    adapter;
+    core;
+    bridge;
+    ops;
+  }
+
+  subgraph cluster_external {
+    label="External environment";
+    color="#e5e7eb";
+    style="rounded,dashed";
+    fontsize=12;
+    user;
+    runtime;
+    peer;
+  }
+}

@@ -1,0 +1,81 @@
+digraph OpenClawP2PZh {
+  graph [
+    rankdir=LR
+    bgcolor="white"
+    pad="0.25"
+    nodesep="0.55"
+    ranksep="0.8"
+    fontname="Hiragino Sans GB"
+    labelloc="t"
+    label="OpenClaw-P2P 模块总览"
+  ];
+
+  node [
+    shape=box
+    style="rounded,filled"
+    fontname="Hiragino Sans GB"
+    fontsize=12
+    color="#4b5563"
+    penwidth=1.1
+    margin="0.18,0.10"
+  ];
+
+  edge [
+    color="#6b7280"
+    penwidth=1.2
+    arrowsize=0.8
+    fontname="Hiragino Sans GB"
+    fontsize=10
+  ];
+
+  user [label="Telegram 用户", fillcolor="#f3f4f6"];
+  runtime [label="OpenClaw 运行时\nmabot / tg2", fillcolor="#f3f4f6"];
+  peer [label="远端节点\ncloud1 等", fillcolor="#f3f4f6"];
+
+  workspace [label="6. Workspace 模板\n已验证", fillcolor="#dff3e3", color="#2f7d32"];
+  plugin [label="3. Tool 插件\n已验证，仍有遗留项", fillcolor="#fff3cd", color="#946200"];
+  store [label="4. 本地状态层\n已验证", fillcolor="#dff3e3", color="#2f7d32"];
+  adapter [label="2. Adapter 编排层\n已验证", fillcolor="#dff3e3", color="#2f7d32"];
+  core [label="1. Go OpenAgent Core\n可用，需补稳定性", fillcolor="#fff3cd", color="#946200"];
+  bridge [label="5. Telegram Bridge\n存在，但不是主路径", fillcolor="#fff3cd", color="#946200"];
+  ops [label="7. 验收 / 运维工具\n已验证", fillcolor="#dff3e3", color="#2f7d32"];
+
+  user -> runtime [label="私聊消息"];
+  runtime -> workspace [label="行为规则"];
+  workspace -> plugin [label="工具选择"];
+  plugin -> store [label="pending / outgoing / events"];
+  plugin -> adapter [label="工具动作"];
+  adapter -> core [label="HTTP API"];
+  core -> peer [label="gossip / fetch", dir=both];
+  bridge -> adapter [label="直连桥接"];
+
+  ops -> runtime [style=dashed, label="观测"];
+  ops -> store [style=dashed, label="检查"];
+  ops -> core [style=dashed, label="验证"];
+
+  subgraph cluster_repo {
+    label="仓库内模块";
+    color="#cbd5e1";
+    style="rounded";
+    fontsize=12;
+    fontname="Hiragino Sans GB";
+    workspace;
+    plugin;
+    store;
+    adapter;
+    core;
+    bridge;
+    ops;
+  }
+
+  subgraph cluster_external {
+    label="外部环境";
+    color="#e5e7eb";
+    style="rounded,dashed";
+    fontsize=12;
+    fontname="Hiragino Sans GB";
+    user;
+    runtime;
+    peer;
+  }
+}

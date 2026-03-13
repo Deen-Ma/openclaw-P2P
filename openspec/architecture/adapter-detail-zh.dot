@@ -1,0 +1,143 @@
+digraph AdapterDetailZh {
+  graph [
+    rankdir=LR
+    bgcolor="white"
+    pad="0.25"
+    nodesep="0.55"
+    ranksep="0.85"
+    fontname="Hiragino Sans GB"
+    labelloc="t"
+    label="Adapter 编排层详细结构"
+  ];
+
+  node [
+    shape=box
+    style="rounded,filled"
+    fontname="Hiragino Sans GB"
+    fontsize=12
+    color="#4b5563"
+    penwidth=1.1
+    margin="0.18,0.10"
+  ];
+
+  edge [
+    color="#6b7280"
+    penwidth=1.2
+    arrowsize=0.8
+    fontname="Hiragino Sans GB"
+    fontsize=10
+  ];
+
+  subgraph cluster_entry {
+    label="接入层";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    runtime_plugin [label="openclaw-runtime-plugin.ts\n注册 OpenClaw 内部工具", fillcolor="#eef2ff"];
+    tool_plugin [label="openclaw-plugin.ts\n工具 schema / action 路由\n草拟 / 确认 / 取消 / 读取", fillcolor="#fff3cd", color="#946200"];
+    telegram_bridge [label="telegram-bridge.ts\n直连 Telegram bridge", fillcolor="#eef2ff"];
+    cli [label="cli.ts\n本地调试 / bridge 启动", fillcolor="#eef2ff"];
+  }
+
+  subgraph cluster_core {
+    label="编排核心";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    adapter [label="adapter.ts\nOpenClawOpenAgentAdapter\n真正的业务编排入口", fillcolor="#dff3e3", color="#2f7d32"];
+
+    publish_path [label="发布路径\npublishPreparedTask / Fact", fillcolor="#f0fdf4"];
+    mutation_path [label="状态变更路径\nwithdraw / complete", fillcolor="#f0fdf4"];
+    sync_path [label="同步路径\nsyncIncoming", fillcolor="#f0fdf4"];
+    detail_path [label="读取路径\nfetchDetail / getByHandle", fillcolor="#fff3cd", color="#946200"];
+    list_path [label="视图路径\nlistIncoming / feed / my", fillcolor="#f0fdf4"];
+  }
+
+  subgraph cluster_rules {
+    label="分类与路由";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    decision [label="decision-provider.ts\nDecisionProvider 抽象", fillcolor="#e0f2fe"];
+    classifier [label="classifier.ts\n规则分类\ntext -> task / interest / none", fillcolor="#e0f2fe"];
+    topic_registry [label="topic-registry.ts\ntopicKey / taxonomy / topics", fillcolor="#e0f2fe"];
+    config [label="config.ts\nstateDir / defaults / routing / redaction", fillcolor="#e0f2fe"];
+  }
+
+  subgraph cluster_store {
+    label="本地状态与日志";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    store [label="store.ts\nAdapterStore", fillcolor="#dff3e3", color="#2f7d32"];
+    pending [label="pending-network-actions.json", fillcolor="#f8fafc"];
+    outgoing [label="outgoing-publications.json", fillcolor="#f8fafc"];
+    incoming [label="incoming-opportunities.json", fillcolor="#f8fafc"];
+    events [label="adapter-events.jsonl", fillcolor="#f8fafc"];
+  }
+
+  subgraph cluster_transport {
+    label="传输与外部 API";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    client [label="client.ts\nOpenAgentClient", fillcolor="#fee2e2"];
+    api [label="OpenAgent API\n/healthz /v1/tasks /v1/facts\n/v1/sessions /v1/fetch", fillcolor="#f3f4f6"];
+  }
+
+  subgraph cluster_shared {
+    label="共享定义";
+    color="#cbd5e1";
+    style="rounded";
+    fontname="Hiragino Sans GB";
+
+    types [label="types.ts\npayload / record / tool input / Telegram types", fillcolor="#f5f3ff"];
+  }
+
+  runtime_plugin -> tool_plugin [label="注册工具"];
+  tool_plugin -> adapter [label="调用编排"];
+  telegram_bridge -> adapter [label="自然语言 / 命令"];
+  cli -> telegram_bridge [label="启动 bridge"];
+  cli -> adapter [label="本地调试"];
+
+  adapter -> publish_path;
+  adapter -> mutation_path;
+  adapter -> sync_path;
+  adapter -> detail_path;
+  adapter -> list_path;
+
+  adapter -> decision [label="分类入口"];
+  decision -> classifier [label="默认规则实现"];
+  adapter -> topic_registry [label="topic / taxonomy"];
+  adapter -> config [label="默认配置 / 脱敏 / 路由"];
+
+  publish_path -> store [label="记录发布"];
+  mutation_path -> store [label="更新状态"];
+  sync_path -> store [label="upsert 远端机会"];
+  detail_path -> store [label="handle 查询"];
+  list_path -> store [label="视图查询"];
+  tool_plugin -> store [label="pending 草稿"];
+
+  store -> pending;
+  store -> outgoing;
+  store -> incoming;
+  store -> events;
+
+  publish_path -> client [label="publish"];
+  mutation_path -> client [label="withdraw / complete"];
+  sync_path -> client [label="tasks / facts / sessions"];
+  detail_path -> client [label="fetch detail"];
+  adapter -> client [label="health / peers"];
+  client -> api [label="HTTP 请求"];
+
+  tool_plugin -> types [style=dashed];
+  adapter -> types [style=dashed];
+  store -> types [style=dashed];
+  client -> types [style=dashed];
+  telegram_bridge -> types [style=dashed];
+}
