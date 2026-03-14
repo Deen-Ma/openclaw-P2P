@@ -7,11 +7,12 @@ This board is the operational mapping from repo modules to proposal worktrees.
 | Terminal | Role | Proposal | Modules | Suggested worktree | Start timing |
 | --- | --- | --- | --- | --- | --- |
 | `T1` | control | main repo | all | current repo | now |
-| `T2` | execute | `001-detail-handle-resolution` | C, D | `../wt-001-detail-handle` | now |
-| `T3` | execute | `002-pending-session-isolation` | C, D, F | `../wt-002-session-isolation` | now |
-| `T4` | execute | `003-tasks-api-stability` | A | `../wt-003-tasks-api-stability` | optional third line after promoting to `active` |
-| `T5` | execute | `004-tg2-behavior-regression` | F, G | `../wt-004-tg2-regression` | after `001` and `002` |
-| `T6` | execute | `005-cross-node-e2e-regression` | A, G | `../wt-005-cross-node-e2e` | after `003`, once promoted to `active` |
+| `T2` | execute | `000-adapter-workspace-baseline` | B, C, D, E, F | `../wt-000-adapter-baseline` | now |
+| `T3` | execute | `003-tasks-api-stability` | A | `../wt-003-tasks-api-stability` | optional parallel line |
+| `T4` | execute | `001-detail-handle-resolution` | C, D | `../wt-001-detail-handle-rework` | after `000` |
+| `T5` | execute | `002-pending-session-isolation` | C, D, F | `../wt-002-session-isolation-rework` | after `000` |
+| `T6` | execute | `004-tg2-behavior-regression` | F, G | `../wt-004-tg2-regression` | after `000`, `001`, and `002` |
+| `T7` | execute | `005-cross-node-e2e-regression` | A, G | `../wt-005-cross-node-e2e` | after `003`, once promoted to `active` |
 
 ## Module Legend
 
@@ -29,8 +30,7 @@ This board is the operational mapping from repo modules to proposal worktrees.
 
 Open immediately:
 
-- `001-detail-handle-resolution`
-- `002-pending-session-isolation`
+- `000-adapter-workspace-baseline`
 
 Optional third parallel line:
 
@@ -38,6 +38,8 @@ Optional third parallel line:
 
 Hold until the first wave settles:
 
+- `001-detail-handle-resolution`
+- `002-pending-session-isolation`
 - `004-tg2-behavior-regression`
 - `005-cross-node-e2e-regression`
 
@@ -54,8 +56,8 @@ Reason:
 Commit or stash `openspec/` and `openspec-worktree.sh` before running:
 
 ```bash
-./openspec-worktree.sh create 001
-./openspec-worktree.sh batch-create 001 002
+./openspec-worktree.sh create 000
+./openspec-worktree.sh batch-create 000 003
 ```
 
 Only proposals in `state: active` should be created without an override.

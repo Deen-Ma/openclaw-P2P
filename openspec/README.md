@@ -40,17 +40,17 @@ Rules:
 Suggested commands:
 
 ```bash
-git worktree add ../wt-001-detail-handle -b spec/001-detail-handle
-git worktree add ../wt-002-session-isolation -b spec/002-session-isolation
+git worktree add ../wt-000-adapter-baseline -b spec/000-adapter-workspace-baseline
+git worktree add ../wt-003-tasks-api-stability -b spec/003-tasks-api-stability
 ```
 
 Operational shortcuts:
 
 ```bash
 ./openspec-worktree.sh list
-./openspec-worktree.sh create 001
+./openspec-worktree.sh create 000
 ./openspec-worktree.sh create --force 003
-./openspec-worktree.sh prompt 001
+./openspec-worktree.sh prompt 000
 ```
 
 By default, only proposals in `state: active` should be created as worktrees.

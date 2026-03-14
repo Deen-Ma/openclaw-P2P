@@ -19,12 +19,12 @@ Usage:
 Examples:
   ./openspec-worktree.sh list
   ./openspec-worktree.sh board
-  ./openspec-worktree.sh show 001
-  ./openspec-worktree.sh create 001
+  ./openspec-worktree.sh show 000
+  ./openspec-worktree.sh create 000
   ./openspec-worktree.sh create --force 003
-  ./openspec-worktree.sh batch-create 001 002
+  ./openspec-worktree.sh batch-create 000 003
   ./openspec-worktree.sh batch-create --force 003 005
-  ./openspec-worktree.sh prompt 001
+  ./openspec-worktree.sh prompt 000
 EOF
 }
 
@@ -151,22 +151,24 @@ print_board() {
   cat <<'EOF'
 Terminal  Mode       Proposal  Modules   Suggested Worktree               Start
 T1        control    main      all       current repo                      now
-T2        execute    001       C,D       ../wt-001-detail-handle           now
-T3        execute    002       C,D,F     ../wt-002-session-isolation       now
-T4        execute    003       A         ../wt-003-tasks-api-stability     optional after active/--force
-T5        execute    004       F,G       ../wt-004-tg2-regression          after 001 + 002
-T6        execute    005       A,G       ../wt-005-cross-node-e2e          after 003 and active
+T2        execute    000       B,C,D,E,F ../wt-000-adapter-baseline        now
+T3        execute    003       A         ../wt-003-tasks-api-stability     optional parallel line
+T4        execute    001       C,D       ../wt-001-detail-handle-rework    after 000
+T5        execute    002       C,D,F     ../wt-002-session-isolation-rework after 000
+T6        execute    004       F,G       ../wt-004-tg2-regression          after 000,001,002
+T7        execute    005       A,G       ../wt-005-cross-node-e2e          after 003 and active
 
 Module legend:
   A = Go OpenAgent Core
+  B = Adapter Orchestration
   C = OpenClaw Tool Plugin
   D = Local State Store
+  E = Telegram Bridge Runtime
   F = Agent Workspace Templates
   G = Acceptance and Ops Tooling
 
 Recommended first wave:
-  001-detail-handle-resolution
-  002-pending-session-isolation
+  000-adapter-workspace-baseline
 
 Optional third parallel line:
   003-tasks-api-stability (promote to active first, or create with --force)

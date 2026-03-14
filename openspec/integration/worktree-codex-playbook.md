@@ -21,9 +21,10 @@ Use this layout for the current repo:
 | Terminal | Directory | Purpose |
 | --- | --- | --- |
 | 1 | main repo | planning, `openspec/`, review, integration, merge |
-| 2 | `../wt-001-detail-handle` | implement proposal `001` |
-| 3 | `../wt-002-session-isolation` | implement proposal `002` |
-| 4 | optional third worktree | proposal `003` only if you want a third parallel line |
+| 2 | `../wt-000-adapter-baseline` | implement proposal `000` |
+| 3 | optional third worktree | proposal `003` only if you want a parallel investigation line |
+| 4 | `../wt-001-detail-handle-rework` | implement proposal `001` after `000` |
+| 5 | `../wt-002-session-isolation-rework` | implement proposal `002` after `000` |
 
 Do not use one Codex session to hop across multiple worktrees.
 
@@ -45,8 +46,7 @@ Read:
 Examples:
 
 ```bash
-./openspec-worktree.sh create 001
-./openspec-worktree.sh create 002
+./openspec-worktree.sh create 000
 ```
 
 Only create `state: active` proposals by default. If you need to investigate a
@@ -66,13 +66,13 @@ This uses each proposal's `status.md` to pick:
 Example:
 
 ```bash
-cd ../wt-001-detail-handle
+cd ../wt-000-adapter-baseline
 ```
 
 Start Codex in that terminal, then paste:
 
 ```bash
-./openspec-worktree.sh prompt 001
+./openspec-worktree.sh prompt 000
 ```
 
 If you are already inside the worktree, the same script path still works
@@ -101,16 +101,17 @@ Do not merge in "who finished first" order if dependency order disagrees.
 
 ## Current Recommended Start
 
-The first two proposals are the cleanest parallel pair:
+The current first-wave proposal is:
 
-- `001-detail-handle-resolution`
-- `002-pending-session-isolation`
+- `000-adapter-workspace-baseline`
 
 Use `003-tasks-api-stability` as a third line only if you want one engineer or
 one Codex session dedicated to investigation work.
 
 Hold these until the earlier fixes settle:
 
+- `001-detail-handle-resolution`
+- `002-pending-session-isolation`
 - `004-tg2-behavior-regression`
 - `005-cross-node-e2e-regression`
 
